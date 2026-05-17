@@ -2,33 +2,60 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Kapija</title>
+  <title>Kontrola kapije</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      margin-top: 100px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Kontrola kapije</h1>
 
-  <button onclick="otvoriKapiju()">Otvori kapiju</button>
+  <h1>Otvori kapiju</h1>
 
-  <p id="status"></p>
+  <button onclick="otvoriKapiju()">OTVORI</button>
+
+  <div id="status"></div>
 
   <script>
     async function otvoriKapiju() {
-      document.getElementById("status").innerText = "Šaljem zahtjev...";
+      const status = document.getElementById("status");
+
+      status.innerText = "Šaljem zahtjev...";
 
       try {
-        const res = await fetch("https://vidakovic.ddnsfree.com//api/webhook/kapija_a8f3k2m9x7q4n1p6", {
+        const res = await fetch("WEBHOOK_URL", {
           method: "POST"
         });
 
         if (res.ok) {
-          document.getElementById("status").innerText = "Kapija otvorena ✅";
+          status.innerText = "Kapija otvorena ✅";
+
+          // kratka pauza pa redirect
+          setTimeout(() => {
+            window.location.href = "https://filipvi.github.io/HA/";
+          }, 1500);
+
         } else {
-          document.getElementById("status").innerText = "Greška ❌";
+          status.innerText = "Greška pri otvaranju ❌";
         }
+
       } catch (e) {
-        document.getElementById("status").innerText = "Neuspješno ❌";
+        status.innerText = "Neuspješno ❌";
       }
     }
   </script>
+
 </body>
 </html>
