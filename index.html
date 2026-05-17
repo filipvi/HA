@@ -77,11 +77,6 @@
       color: white;
     }
 
-    .door {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-      color: white;
-    }
-
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
@@ -91,34 +86,25 @@
       margin-top: 12px;
       font-size: 15px;
       min-height: 20px;
-      opacity: 0.9;
     }
 
     .hidden {
       display: none;
     }
 
-    /* 📱 MOBILE OPTIMIZATION */
     @media (max-width: 600px) {
-
       .card {
         max-width: 95vw;
         padding: 22px;
-        border-radius: 18px;
+      }
+
+      input, button {
+        font-size: 20px;
+        padding: 18px;
       }
 
       h2 {
         font-size: 26px;
-      }
-
-      input {
-        font-size: 20px;
-        padding: 16px;
-      }
-
-      button {
-        font-size: 20px;
-        padding: 18px;
       }
 
       #status {
@@ -129,26 +115,23 @@
 </head>
 
 <body>
-  
+
 <div class="card">
-<h1>VIDAKOVIĆ KUĆA</h1>    
 
   <h2>🔐 Kontrola pristupa</h2>
 
-  <!-- PIN -->
   <div id="pinBox">
     <input type="password" id="pin" placeholder="Unesi PIN">
     <button class="login" onclick="checkPin()">UNESI PIN</button>
   </div>
 
-  <!-- CONTROLS -->
   <div id="controls" class="hidden">
 
     <button class="gate" id="btnGate" onclick="otvoriKapiju()">
       🚪 Otvori kapiju
     </button>
 
-    <button class="door" id="btnDoor" onclick="otkljucajVrata()">
+    <button class="gate" id="btnDoor" onclick="otkljucajVrata()">
       🔓 Otključaj vrata
     </button>
 
@@ -160,34 +143,42 @@
 
 <script>
 
-const PIN = "1234";
-
 const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
-const DOOR_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/ulazna_a8f3k2m9x7q4n1p5";
-
-function checkPin() {
-  const input = document.getElementById("pin").value;
-  const status = document.getElementById("status");
-
-  if (input === PIN) {
-    document.getElementById("pinBox").classList.add("hidden");
-    document.getElementById("controls").classList.remove("hidden");
-    status.innerText = "✅ PIN ispravan";
-  } else {
-    status.innerText = "❌ Krivi PIN";
-  }
-}
-
-/* Enter tipka za PIN */
-document.getElementById("pin").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {
-    checkPin();
-  }
-});
+const AUTH_WEBHOOK  = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
 
 function setLoading(state) {
   document.getElementById("btnGate").disabled = state;
   document.getElementById("btnDoor").disabled = state;
+}
+
+async function checkPin() {
+  const pin = document.getElementById("pin").value;
+  const status = document.getElementById("status");
+
+  status.innerText = "⏳ Provjera PIN-a...";
+
+  try {
+    const res = await fetch(AUTH_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ pin })
+    });
+
+    const text = await res.text();
+
+    if (res.ok && text.includes("OK")) {
+      document.getElementById("pinBox").classList.add("hidden");
+      document.getElementById("controls").classList.remove("hidden");
+      status.innerText = "✅ Pristup odobren";
+    } else {
+      status.innerText = "❌ Krivi PIN";
+    }
+
+  } catch (e) {
+    status.innerText = "❌ Greška u provjeri";
+  }
 }
 
 async function sendAction(url, message, redirect = false) {
@@ -224,7 +215,7 @@ function otvoriKapiju() {
 }
 
 function otkljucajVrata() {
-  sendAction(DOOR_WEBHOOK, "Vrata otključana", false);
+  sendAction(GATE_WEBHOOK, "Vrata otključana", false);
 }
 
 </script>
