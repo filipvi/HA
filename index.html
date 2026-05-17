@@ -19,6 +19,7 @@
       overflow: hidden;
     }
 
+    /* ambient glow */
     body::before {
       content: '';
       position: fixed;
@@ -44,6 +45,7 @@
       position: relative;
     }
 
+    /* ── Header ── */
     .header {
       text-align: center;
       margin-bottom: 28px;
@@ -72,6 +74,7 @@
       margin-top: 4px;
     }
 
+    /* ── PIN display ── */
     .pin-display {
       display: flex;
       justify-content: center;
@@ -98,6 +101,7 @@
       box-shadow: 0 0 10px rgba(239,68,68,0.6);
     }
 
+    /* ── Keypad ── */
     .keypad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -145,6 +149,7 @@
     }
     .key-zero { grid-column: 2; }
 
+    /* ── Status ── */
     .status {
       text-align: center;
       font-size: 14px;
@@ -156,6 +161,7 @@
     .status.err { color: #ef4444; }
     .status.loading { color: #38bdf8; }
 
+    /* ── Shake animation ── */
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       15% { transform: translateX(-8px); }
@@ -168,6 +174,55 @@
     .shake { animation: shake 0.5s ease; }
 
     .hidden { display: none !important; }
+
+    /* ── Action screen ── */
+    #actionScreen { display: none; text-align: center; }
+
+    .action-btn {
+      width: 100%;
+      padding: 18px;
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.3px;
+      margin-bottom: 12px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .action-btn:active { transform: scale(0.97); }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-gate {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+    }
+    .btn-door {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 8px 24px rgba(245,158,11,0.3);
+    }
+
+    .session-info {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 20px;
+    }
+    .session-timer { color: #38bdf8; font-weight: 600; }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 8px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logout-btn:hover { color: #94a3b8; }
   </style>
 </head>
 <body>
@@ -179,6 +234,7 @@
     <p>Kontrola pristupa</p>
   </div>
 
+  <!-- PIN screen -->
   <div id="pinScreen">
     <div class="pin-display" id="pinDisplay">
       <div class="pin-dot" id="d0"></div>
@@ -204,26 +260,55 @@
 
     <div class="status" id="pinStatus"></div>
   </div>
+
+  <!-- Action screen -->
+  <div id="actionScreen">
+    <div class="session-info">
+      Sesija ističe za <span class="session-timer" id="timerDisplay">5:00</span>
+    </div>
+    <button class="action-btn btn-gate" id="gateBtn" onclick="callWebhook('gate')">
+      🚪 &nbsp;Otvori kapiju
+    </button>
+    <button class="action-btn btn-door" id="doorBtn" onclick="callWebhook('door')">
+      🔓 &nbsp;Otključaj ulazna vrata
+    </button>
+    <div class="status" id="actionStatus"></div>
+    <button class="logout-btn" onclick="logout()">Odjavi se</button>
+  </div>
 </div>
 
 <script>
-  const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
+  const WEBHOOKS = {
+    gate: "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6",
+    door: "https://vidakovic.ddnsfree.com/api/webhook/ulazna_a8f3k2m9x7q4n1p6",
+  };
   const PIN_HASH = "b4aae044ca25626d203d4b93508c6330d4f6577fa84af003df907564358aeafd";
   const PIN_LENGTH = 4;
+  const SESSION_MINUTES = 5;
 
   let pin = "";
   let checking = false;
+  let sessionTimer = null;
+  let sessionSeconds = 0;
 
+  if (Notification.permission === "default") Notification.requestPermission();
+
+  function notify(title, body) {
+    if (Notification.permission === "granted")
+      new Notification(title, { body, icon: "https://filipvi.github.io/HA/icon.png" });
+  }
+
+  // ── PIN screen ──
   document.getElementById("keypad").addEventListener("click", e => {
     const key = e.target.closest(".key");
     if (!key || checking) return;
-
     if (key.dataset.n !== undefined) pressDigit(key.dataset.n);
     else if (key.id === "delBtn") pressDelete();
     else if (key.id === "enterBtn") submitPin();
   });
 
   document.addEventListener("keydown", e => {
+    if (document.getElementById("actionScreen").style.display !== "none") return;
     if (checking) return;
     if (e.key >= "0" && e.key <= "9") pressDigit(e.key);
     else if (e.key === "Backspace") pressDelete();
@@ -240,7 +325,7 @@
   function pressDelete() {
     pin = pin.slice(0, -1);
     updateDots();
-    setStatus("");
+    setPinStatus("");
   }
 
   function updateDots() {
@@ -251,8 +336,14 @@
     }
   }
 
-  function setStatus(msg, type = "") {
+  function setPinStatus(msg, type = "") {
     const el = document.getElementById("pinStatus");
+    el.textContent = msg;
+    el.className = "status" + (type ? " " + type : "");
+  }
+
+  function setActionStatus(msg, type = "") {
+    const el = document.getElementById("actionStatus");
     el.textContent = msg;
     el.className = "status" + (type ? " " + type : "");
   }
@@ -273,26 +364,13 @@
       return;
     }
 
-    setStatus("⏳ Otvaranje...", "loading");
-    try {
-      const res = await fetch(GATE_WEBHOOK, { method: "POST" });
-      if (res.ok) {
-        setStatus("✅ Kapija se otvara!", "ok");
-        setTimeout(resetPin, 3000);
-      } else {
-        setStatus("❌ Greška (" + res.status + ")", "err");
-        setTimeout(resetPin, 2000);
-      }
-    } catch {
-      setStatus("❌ Nema veze sa serverom", "err");
-      setTimeout(resetPin, 2000);
-    } finally {
-      checking = false;
-    }
+    checking = false;
+    setPinStatus("✅ Pristup odobren", "ok");
+    setTimeout(showActionScreen, 400);
   }
 
   function wrongPin(msg = "❌ Pogrešan PIN") {
-    setStatus(msg, "err");
+    setPinStatus(msg, "err");
     for (let i = 0; i < PIN_LENGTH; i++) {
       const dot = document.getElementById("d" + i);
       dot.classList.add("error");
@@ -302,17 +380,68 @@
     display.classList.remove("shake");
     void display.offsetWidth;
     display.classList.add("shake");
-
     setTimeout(() => {
-      resetPin();
+      pin = ""; updateDots(); setPinStatus("");
       display.classList.remove("shake");
     }, 600);
   }
 
-  function resetPin() {
-    pin = "";
-    updateDots();
-    setStatus("");
+  // ── Action screen ──
+  function showActionScreen() {
+    document.getElementById("pinScreen").style.display = "none";
+    document.getElementById("actionScreen").style.display = "block";
+    startSessionTimer();
+  }
+
+  function startSessionTimer() {
+    sessionSeconds = SESSION_MINUTES * 60;
+    updateTimerDisplay();
+    clearInterval(sessionTimer);
+    sessionTimer = setInterval(() => {
+      sessionSeconds--;
+      updateTimerDisplay();
+      if (sessionSeconds <= 0) logout();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(sessionSeconds / 60);
+    const s = sessionSeconds % 60;
+    document.getElementById("timerDisplay").textContent = m + ":" + String(s).padStart(2, "0");
+  }
+
+  async function callWebhook(type) {
+    const btns = document.querySelectorAll(".action-btn");
+    btns.forEach(b => b.disabled = true);
+    setActionStatus("⏳ Slanje...", "loading");
+
+    try {
+      const res = await fetch(WEBHOOKS[type], { method: "POST" });
+      if (res.ok) {
+        if (type === "gate") {
+          setActionStatus("✅ Kapija se otvara!", "ok");
+          notify("🚪 Kapija", "Kapija se otvara!");
+        } else {
+          setActionStatus("✅ Ulazna vrata otključana!", "ok");
+          notify("🔓 Ulazna vrata", "Ulazna vrata otključana!");
+        }
+        startSessionTimer();
+        setTimeout(() => setActionStatus(""), 3000);
+      } else {
+        setActionStatus("❌ Greška (" + res.status + ")", "err");
+      }
+    } catch {
+      setActionStatus("❌ Nema veze sa serverom", "err");
+    } finally {
+      btns.forEach(b => b.disabled = false);
+    }
+  }
+
+  function logout() {
+    clearInterval(sessionTimer);
+    pin = ""; updateDots(); setPinStatus(""); setActionStatus("");
+    document.getElementById("actionScreen").style.display = "none";
+    document.getElementById("pinScreen").style.display = "block";
   }
 </script>
 </body>
