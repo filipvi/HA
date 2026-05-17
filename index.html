@@ -118,7 +118,18 @@ async function checkPin() {
       body: JSON.stringify({ pin })
     });
 
-    const data = await res.json();
+    let data = {};
+
+const text = await res.text();
+
+if (text) {
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = { status: "fail" };
+  }
+}
+    
 
     if (data.status === "ok") {
       document.getElementById("pinBox").classList.add("hidden");
