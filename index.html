@@ -1,190 +1,457 @@
 <!DOCTYPE html>
-<html>
+<html lang="hr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>VIDAKOVIĆ kuća pristup</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>VIDAKOVIĆ - Pristup</title>
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f172a, #1e293b);
-      color: white;
-
-      display: flex;
-      justify-content: center;
-      align-items: center;
-
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #0a0f1e 0%, #0d1b2a 50%, #0f2133 100%);
       min-height: 100vh;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    /* ambient glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+      pointer-events: none;
     }
 
     .card {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-
-      padding: 28px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 32px 24px;
       width: 100%;
-      max-width: 380px;
+      max-width: 360px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative;
+    }
 
+    /* ── Header ── */
+    .header {
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+      margin-bottom: 28px;
+    }
+    .logo {
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 14px;
+      box-shadow: 0 8px 24px rgba(56,189,248,0.3);
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f1f5f9;
+      letter-spacing: 0.5px;
+    }
+    .header p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
     }
 
-    h2 {
-      margin-bottom: 18px;
+    /* ── PIN display ── */
+    .pin-display {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+    .pin-dot.filled {
+      background: #38bdf8;
+      border-color: #38bdf8;
+      box-shadow: 0 0 10px rgba(56,189,248,0.6);
+      transform: scale(1.1);
+    }
+    .pin-dot.error {
+      background: #ef4444;
+      border-color: #ef4444;
+      box-shadow: 0 0 10px rgba(239,68,68,0.6);
     }
 
-    input {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-
-      border-radius: 12px;
-      border: none;
-
-      text-align: center;
-      font-size: 18px;
-
-      box-sizing: border-box;
+    /* ── Keypad ── */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-
-      font-size: 18px;
-      font-weight: bold;
-
-      border: none;
-      border-radius: 12px;
-
+    .key {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      color: #f1f5f9;
+      font-size: 22px;
+      font-weight: 500;
+      height: 64px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
     }
-
-    .login {
-      background: #f59e0b;
-      color: black;
+    .key:active, .key.pressed {
+      background: rgba(56,189,248,0.18);
+      border-color: rgba(56,189,248,0.4);
+      transform: scale(0.94);
     }
-
-    .gate {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: white;
+    .key.del {
+      font-size: 20px;
+      color: #94a3b8;
     }
-
-    button:disabled {
-      opacity: 0.5;
+    .key.enter {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      border-color: transparent;
+      box-shadow: 0 4px 16px rgba(56,189,248,0.3);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
+    .key.enter:active {
+      transform: scale(0.94);
+      box-shadow: 0 2px 8px rgba(56,189,248,0.2);
+    }
+    .key-zero { grid-column: 2; }
 
-    #status {
-      margin-top: 12px;
-      font-size: 15px;
+    /* ── Status ── */
+    .status {
+      text-align: center;
+      font-size: 14px;
       min-height: 20px;
+      color: #64748b;
+      transition: color 0.2s;
+    }
+    .status.ok { color: #22c55e; }
+    .status.err { color: #ef4444; }
+    .status.loading { color: #38bdf8; }
+
+    /* ── Shake animation ── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15% { transform: translateX(-8px); }
+      30% { transform: translateX(8px); }
+      45% { transform: translateX(-6px); }
+      60% { transform: translateX(6px); }
+      75% { transform: translateX(-4px); }
+      90% { transform: translateX(4px); }
+    }
+    .shake { animation: shake 0.5s ease; }
+
+    /* ── Gate screen ── */
+    #gateScreen { display: none; text-align: center; }
+
+    .session-info {
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 20px;
+    }
+    .session-timer {
+      color: #38bdf8;
+      font-weight: 600;
     }
 
-    .hidden {
-      display: none;
+    .gate-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      border-radius: 16px;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .gate-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 12px rgba(34,197,94,0.2);
+    }
+    .gate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
-    @media (max-width: 600px) {
-      .card {
-        max-width: 95vw;
-        padding: 22px;
-      }
-
-      input, button {
-        font-size: 20px;
-        padding: 18px;
-      }
-
-      h2 {
-        font-size: 26px;
-      }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 8px 24px rgba(34,197,94,0.3), 0 0 0 0 rgba(34,197,94,0.4); }
+      70% { box-shadow: 0 8px 24px rgba(34,197,94,0.3), 0 0 0 20px rgba(34,197,94,0); }
+      100% { box-shadow: 0 8px 24px rgba(34,197,94,0.3), 0 0 0 0 rgba(34,197,94,0); }
     }
+    .gate-btn.pulsing { animation: pulse-ring 1s ease; }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #475569;
+      font-size: 13px;
+      cursor: pointer;
+      margin-top: 20px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: color 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logout-btn:hover { color: #94a3b8; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
-
 <body>
 
 <div class="card">
-
-  <h2>🔐 Kontrola pristupa</h2>
-
-  <div id="pinBox">
-    <input type="password" id="pin" placeholder="Unesi PIN">
-    <button class="login" onclick="checkPin()">UNESI PIN</button>
+  <div class="header">
+    <div class="logo">🏠</div>
+    <h1>VIDAKOVIĆ</h1>
+    <p>Kontrola pristupa</p>
   </div>
 
-  <div id="controls" class="hidden">
-    <button class="gate" onclick="otvoriKapiju()">🚪 Otvori kapiju</button>
+  <!-- PIN screen -->
+  <div id="pinScreen">
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+    </div>
+
+    <div class="keypad" id="keypad">
+      <button class="key" data-n="1">1</button>
+      <button class="key" data-n="2">2</button>
+      <button class="key" data-n="3">3</button>
+      <button class="key" data-n="4">4</button>
+      <button class="key" data-n="5">5</button>
+      <button class="key" data-n="6">6</button>
+      <button class="key" data-n="7">7</button>
+      <button class="key" data-n="8">8</button>
+      <button class="key" data-n="9">9</button>
+      <button class="key del" id="delBtn">⌫</button>
+      <button class="key key-zero" data-n="0">0</button>
+      <button class="key enter" id="enterBtn">OK</button>
+    </div>
+
+    <div class="status" id="pinStatus"></div>
   </div>
 
-  <div id="status"></div>
-
+  <!-- Gate screen -->
+  <div id="gateScreen">
+    <div class="session-info">
+      Sesija ističe za <span class="session-timer" id="timerDisplay">5:00</span>
+    </div>
+    <button class="gate-btn" id="gateBtn" onclick="otvoriKapiju()">
+      🚪 &nbsp;Otvori kapiju
+    </button>
+    <div class="status" id="gateStatus" style="margin-top:16px"></div>
+    <button class="logout-btn" onclick="logout()">Odjavi se</button>
+  </div>
 </div>
 
 <script>
+  const AUTH_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
+  const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija";
+  const PIN_LENGTH = 4;
+  const SESSION_MINUTES = 5;
 
-const AUTH_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
-const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
-  
-function setStatus(msg) {
-  document.getElementById("status").innerText = msg;
-}
+  let pin = "";
+  let checking = false;
+  let sessionTimer = null;
+  let sessionSeconds = 0;
 
-async function checkPin() {
-  const pin = document.getElementById("pin").value;
+  // ── Keypad input ──
+  document.getElementById("keypad").addEventListener("click", e => {
+    const key = e.target.closest(".key");
+    if (!key || checking) return;
 
-  setStatus("⏳ Provjera PIN-a...");
-
-  try {
-    const form = new URLSearchParams();
-    form.append("pin", pin);
-
-    const res = await fetch(AUTH_WEBHOOK, {
-      method: "POST",
-      body: form
-    });
-
-    const data = await res.json().catch(() => ({}));
-
-    if (data.status === "ok") {
-      document.getElementById("pinBox").classList.add("hidden");
-      document.getElementById("controls").classList.remove("hidden");
-      setStatus("✅ Pristup odobren");
-    } else {
-      setStatus("❌ Krivi PIN");
+    if (key.dataset.n !== undefined) {
+      pressDigit(key.dataset.n);
+    } else if (key.id === "delBtn") {
+      pressDelete();
+    } else if (key.id === "enterBtn") {
+      submitPin();
     }
+  });
 
-  } catch (e) {
-    setStatus("❌ Greška u komunikaciji");
-  }
-}
+  // Physical keyboard support
+  document.addEventListener("keydown", e => {
+    if (document.getElementById("gateScreen").style.display !== "none") return;
+    if (checking) return;
+    if (e.key >= "0" && e.key <= "9") pressDigit(e.key);
+    else if (e.key === "Backspace") pressDelete();
+    else if (e.key === "Enter") submitPin();
+  });
 
-async function otvoriKapiju() {
-  setStatus("⏳ Otvaram kapiju...");
-
-  try {
-    const res = await fetch(GATE_WEBHOOK, {
-      method: "POST"
-    });
-
-    if (res.ok) {
-      setStatus("✅ Kapija otvorena");
-    } else {
-      setStatus("❌ Greška");
+  function pressDigit(n) {
+    if (pin.length >= PIN_LENGTH) return;
+    pin += n;
+    updateDots();
+    if (pin.length === PIN_LENGTH) {
+      // slight delay so user sees last dot fill
+      setTimeout(submitPin, 120);
     }
-
-  } catch (e) {
-    setStatus("❌ Neuspješno");
   }
-}
 
+  function pressDelete() {
+    pin = pin.slice(0, -1);
+    updateDots();
+    setStatus("pinStatus", "");
+  }
+
+  function updateDots() {
+    for (let i = 0; i < PIN_LENGTH; i++) {
+      const dot = document.getElementById("d" + i);
+      dot.classList.toggle("filled", i < pin.length);
+      dot.classList.remove("error");
+    }
+  }
+
+  function setStatus(id, msg, type = "") {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = "status" + (type ? " " + type : "");
+  }
+
+  async function submitPin() {
+    if (pin.length < PIN_LENGTH || checking) return;
+    checking = true;
+    setStatus("pinStatus", "⏳ Provjera...", "loading");
+
+    try {
+      const form = new URLSearchParams();
+      form.append("pin", pin);
+      const res = await fetch(AUTH_WEBHOOK, { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+
+      if (data.status === "ok") {
+        setStatus("pinStatus", "✅ Pristup odobren", "ok");
+        setTimeout(showGateScreen, 400);
+      } else {
+        wrongPin();
+      }
+    } catch {
+      wrongPin("❌ Greška veze");
+    } finally {
+      checking = false;
+    }
+  }
+
+  function wrongPin(msg = "❌ Pogrešan PIN") {
+    setStatus("pinStatus", msg, "err");
+    // paint dots red
+    for (let i = 0; i < PIN_LENGTH; i++) {
+      const dot = document.getElementById("d" + i);
+      dot.classList.add("error");
+      dot.classList.remove("filled");
+    }
+    // shake
+    const display = document.getElementById("pinDisplay");
+    display.classList.remove("shake");
+    void display.offsetWidth; // reflow
+    display.classList.add("shake");
+
+    setTimeout(() => {
+      pin = "";
+      updateDots();
+      display.classList.remove("shake");
+    }, 600);
+  }
+
+  // ── Gate screen ──
+  function showGateScreen() {
+    document.getElementById("pinScreen").style.display = "none";
+    const gs = document.getElementById("gateScreen");
+    gs.style.display = "block";
+    startSessionTimer();
+  }
+
+  function startSessionTimer() {
+    sessionSeconds = SESSION_MINUTES * 60;
+    updateTimerDisplay();
+    clearInterval(sessionTimer);
+    sessionTimer = setInterval(() => {
+      sessionSeconds--;
+      updateTimerDisplay();
+      if (sessionSeconds <= 0) logout();
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(sessionSeconds / 60);
+    const s = sessionSeconds % 60;
+    document.getElementById("timerDisplay").textContent =
+      m + ":" + String(s).padStart(2, "0");
+  }
+
+  function logout() {
+    clearInterval(sessionTimer);
+    pin = "";
+    updateDots();
+    setStatus("pinStatus", "");
+    setStatus("gateStatus", "");
+    document.getElementById("gateScreen").style.display = "none";
+    document.getElementById("pinScreen").style.display = "block";
+  }
+
+  async function otvoriKapiju() {
+    const btn = document.getElementById("gateBtn");
+    btn.disabled = true;
+    setStatus("gateStatus", "⏳ Otvaranje...", "loading");
+
+    try {
+      const res = await fetch(GATE_WEBHOOK, { method: "POST" });
+      if (res.ok) {
+        setStatus("gateStatus", "✅ Kapija se otvara!", "ok");
+        btn.classList.add("pulsing");
+        setTimeout(() => btn.classList.remove("pulsing"), 1000);
+        // reset session timer on successful action
+        startSessionTimer();
+      } else {
+        setStatus("gateStatus", "❌ Greška (" + res.status + ")", "err");
+      }
+    } catch {
+      setStatus("gateStatus", "❌ Nema veze sa serverom", "err");
+    } finally {
+      btn.disabled = false;
+    }
+  }
 </script>
-
 </body>
 </html>
