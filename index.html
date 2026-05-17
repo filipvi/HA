@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>VIDAKOVIĆ kuća pristup</title>
 
   <style>
@@ -12,11 +11,9 @@
       font-family: Arial, sans-serif;
       background: linear-gradient(135deg, #0f172a, #1e293b);
       color: white;
-
       display: flex;
       justify-content: center;
       align-items: center;
-
       min-height: 100vh;
       padding: 20px;
     }
@@ -25,46 +22,28 @@
       background: rgba(255,255,255,0.08);
       backdrop-filter: blur(10px);
       border-radius: 16px;
-
       padding: 28px;
       width: 100%;
       max-width: 380px;
-
       text-align: center;
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
-    h2 {
-      margin-bottom: 18px;
-      font-size: 22px;
-    }
+    h2 { margin-bottom: 18px; }
 
-    input {
+    input, button {
       width: 100%;
       padding: 14px;
       margin: 10px 0;
-
       border-radius: 12px;
       border: none;
-
-      text-align: center;
       font-size: 18px;
-
       box-sizing: border-box;
     }
 
     button {
-      width: 100%;
-      padding: 14px;
-      margin: 10px 0;
-
-      font-size: 18px;
-      font-weight: bold;
-
-      border: none;
-      border-radius: 12px;
-
       cursor: pointer;
+      font-weight: bold;
     }
 
     .login {
@@ -79,7 +58,6 @@
 
     button:disabled {
       opacity: 0.5;
-      cursor: not-allowed;
     }
 
     #status {
@@ -88,28 +66,12 @@
       min-height: 20px;
     }
 
-    .hidden {
-      display: none;
-    }
+    .hidden { display: none; }
 
     @media (max-width: 600px) {
-      .card {
-        max-width: 95vw;
-        padding: 22px;
-      }
-
-      input, button {
-        font-size: 20px;
-        padding: 18px;
-      }
-
-      h2 {
-        font-size: 26px;
-      }
-
-      #status {
-        font-size: 17px;
-      }
+      .card { max-width: 95vw; }
+      input, button { font-size: 20px; padding: 18px; }
+      h2 { font-size: 26px; }
     }
   </style>
 </head>
@@ -126,15 +88,7 @@
   </div>
 
   <div id="controls" class="hidden">
-
-    <button class="gate" id="btnGate" onclick="otvoriKapiju()">
-      🚪 Otvori kapiju
-    </button>
-
-    <button class="gate" id="btnDoor" onclick="otkljucajVrata()">
-      🔓 Otključaj vrata
-    </button>
-
+    <button class="gate" onclick="otvoriKapiju()">🚪 Otvori kapiju</button>
   </div>
 
   <div id="status"></div>
@@ -143,19 +97,17 @@
 
 <script>
 
+const AUTH_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
 const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
-const AUTH_WEBHOOK  = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
 
-function setLoading(state) {
-  document.getElementById("btnGate").disabled = state;
-  document.getElementById("btnDoor").disabled = state;
+function setStatus(msg) {
+  document.getElementById("status").innerText = msg;
 }
 
 async function checkPin() {
   const pin = document.getElementById("pin").value;
-  const status = document.getElementById("status");
 
-  status.innerText = "⏳ Provjera PIN-a...";
+  setStatus("⏳ Provjera PIN-a...");
 
   try {
     const res = await fetch(AUTH_WEBHOOK, {
@@ -166,56 +118,36 @@ async function checkPin() {
       body: JSON.stringify({ pin })
     });
 
-    const text = await res.text();
+    const data = await res.json();
 
-    if (res.ok && res.statusText.includes("OK")) {
+    if (data.status === "ok") {
       document.getElementById("pinBox").classList.add("hidden");
       document.getElementById("controls").classList.remove("hidden");
-      status.innerText = "✅ Pristup odobren";
+      setStatus("✅ Pristup odobren");
     } else {
-      status.innerText = "❌ Krivi PIN";
+      setStatus("❌ Krivi PIN");
     }
 
   } catch (e) {
-    status.innerText = "❌ Greška u provjeri";
+    setStatus("❌ Greška");
   }
 }
 
-async function sendAction(url, message, redirect = false) {
-  const status = document.getElementById("status");
-
-  status.innerText = "⏳ Šaljem...";
-  setLoading(true);
+async function otvoriKapiju() {
+  setStatus("⏳ Otvaram kapiju...");
 
   try {
-    const res = await fetch(url, { method: "POST" });
+    const res = await fetch(GATE_WEBHOOK, { method: "POST" });
 
     if (res.ok) {
-      status.innerText = "✅ " + message;
-
-      setTimeout(() => {
-        if (redirect) {
-          window.location.href = "https://filipvi.github.io/HA/";
-        }
-      }, 1200);
-
+      setStatus("✅ Kapija otvorena");
     } else {
-      status.innerText = "❌ Greška";
+      setStatus("❌ Greška");
     }
 
   } catch (e) {
-    status.innerText = "❌ Neuspješno";
+    setStatus("❌ Neuspješno");
   }
-
-  setLoading(false);
-}
-
-function otvoriKapiju() {
-  sendAction(GATE_WEBHOOK, "Kapija otvorena", true);
-}
-
-function otkljucajVrata() {
-  sendAction(GATE_WEBHOOK, "Vrata otključana", false);
 }
 
 </script>
