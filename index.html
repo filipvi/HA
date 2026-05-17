@@ -2,60 +2,124 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Kontrola kapije</title>
+  <title>VIDAKOVIĆ - Kontrola pristupa</title>
+
   <style>
     body {
       font-family: Arial;
       text-align: center;
-      margin-top: 100px;
+      margin-top: 80px;
+      background: #f5f5f5;
     }
+
+    .card {
+      background: white;
+      padding: 30px;
+      margin: auto;
+      width: 320px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
     button {
-      padding: 15px 30px;
-      font-size: 18px;
+      padding: 12px 20px;
+      font-size: 16px;
       cursor: pointer;
+      margin: 10px;
+      width: 100%;
+      border: none;
+      border-radius: 8px;
     }
+
+    .gate {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .door {
+      background: #2196F3;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     #status {
-      margin-top: 20px;
-      font-size: 18px;
+      margin-top: 15px;
+      font-size: 16px;
+      min-height: 20px;
     }
   </style>
 </head>
+
 <body>
 
-  <h1>Otvori kapiju</h1>
+<div class="card">
+  <h2>Kontrola pristupa</h2>
 
-  <button onclick="otvoriKapiju()">OTVORI</button>
+  <button class="gate" id="btnGate" onclick="otvoriKapiju()">
+    🚪 Otvori kapiju
+  </button>
+
+  <button class="door" id="btnDoor" onclick="otkljucajVrata()">
+    🔓 Otključaj vrata
+  </button>
 
   <div id="status"></div>
+</div>
 
-  <script>
-    async function otvoriKapiju() {
-      const status = document.getElementById("status");
+<script>
 
-      status.innerText = "Šaljem zahtjev...";
+const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
 
-      try {
-        const res = await fetch("https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6", {
-          method: "POST"
-        });
+// 👉 OVDJE STAVI DRUGI WEBHOOK ZA VRATA (ili isti ako koristiš isti endpoint)
+const DOOR_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/ulazna_a8f3k2m9x7q4n1p5";
 
-        if (res.ok) {
-          status.innerText = "Kapija otvorena ✅";
+function setLoading(state) {
+  document.getElementById("btnGate").disabled = state;
+  document.getElementById("btnDoor").disabled = state;
+}
 
-          // kratka pauza pa redirect
-          setTimeout(() => {
-            window.location.href = "https://filipvi.github.io/HA/";
-          }, 1500);
+async function sendAction(url, successMessage, redirect = false) {
+  const status = document.getElementById("status");
 
-        } else {
-          status.innerText = "Greška pri otvaranju ❌";
+  status.innerText = "Šaljem zahtjev...";
+  setLoading(true);
+
+  try {
+    const res = await fetch(url, { method: "POST" });
+
+    if (res.ok) {
+      status.innerText = successMessage + " ✅";
+
+      setTimeout(() => {
+        if (redirect) {
+          window.location.href = "https://filipvi.github.io/HA/";
         }
+      }, 1200);
 
-      } catch (e) {
-        status.innerText = "Neuspješno ❌";
-      }
+    } else {
+      status.innerText = "Greška ❌";
     }
-  </script>
+
+  } catch (e) {
+    status.innerText = "Neuspješno ❌";
+  }
+
+  setLoading(false);
+}
+
+function otvoriKapiju() {
+  sendAction(GATE_WEBHOOK, "Kapija otvorena", true);
+}
+
+function otkljucajVrata() {
+  sendAction(DOOR_WEBHOOK, "Vrata otključana", false);
+}
+
+</script>
 
 </body>
 </html>
