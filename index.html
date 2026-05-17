@@ -168,7 +168,7 @@ async function checkPin() {
 
     const text = await res.text();
 
-    if (res.ok && text.includes("OK")) {
+    if (res.ok && res.statusText.includes("OK")) {
       document.getElementById("pinBox").classList.add("hidden");
       document.getElementById("controls").classList.remove("hidden");
       status.innerText = "✅ Pristup odobren";
