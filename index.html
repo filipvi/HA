@@ -161,13 +161,12 @@ async function checkPin() {
   setStatus("⏳ Provjera PIN-a...");
 
   try {
-   const res = await fetch(AUTH_WEBHOOK, {
+  const form = new URLSearchParams();
+form.append("pin", pin);
+
+const res = await fetch(AUTH_WEBHOOK, {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Accept": "application/json"
-  },
-  body: JSON.stringify({ pin })
+  body: form
 });
 
     const data = await res.json();
