@@ -268,10 +268,21 @@
       Sesija ističe za <span class="session-timer" id="timerDisplay">5:00</span>
     </div>
     <button class="action-btn btn-gate" id="gateBtn" onclick="callWebhook('gate')">
-      🚪 &nbsp;Otvori kapiju
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px">
+        <line x1="2" y1="4" x2="2" y2="20"/><line x1="22" y1="4" x2="22" y2="20"/>
+        <line x1="2" y1="8" x2="12" y2="8"/><line x1="2" y1="16" x2="12" y2="16"/>
+        <line x1="5" y1="8" x2="5" y2="16"/><line x1="8.5" y1="8" x2="8.5" y2="16"/>
+        <line x1="12" y1="7" x2="12" y2="17"/>
+        <line x1="12" y1="8" x2="22" y2="8"/><line x1="12" y1="16" x2="22" y2="16"/>
+        <line x1="15.5" y1="8" x2="15.5" y2="16"/><line x1="19" y1="8" x2="19" y2="16"/>
+      </svg>Otvori kapiju
     </button>
     <button class="action-btn btn-door" id="doorBtn" onclick="callWebhook('door')">
-      🔓 &nbsp;Otključaj ulazna vrata
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:8px">
+        <path d="M3 21h18"/>
+        <path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>
+        <circle cx="15" cy="12" r="1.2" fill="white"/>
+      </svg>Otključaj ulazna vrata
     </button>
     <div class="status" id="actionStatus"></div>
     <button class="logout-btn" onclick="logout()">Odjavi se</button>
