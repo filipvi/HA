@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0f1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VIDAKOVIĆ">
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
   <title>VIDAKOVIĆ - Pristup</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -15,7 +22,11 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding:
+  max(16px, env(safe-area-inset-top))
+  max(16px, env(safe-area-inset-right))
+  max(16px, env(safe-area-inset-bottom))
+  max(16px, env(safe-area-inset-left));
       overflow: hidden;
     }
 
@@ -31,6 +42,42 @@
       background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
       pointer-events: none;
     }
+
+    html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.action-btn.loading {
+  opacity: 0.9;
+  pointer-events: none;
+}
 
     .card {
       background: rgba(255,255,255,0.05);
