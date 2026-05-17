@@ -14,6 +14,26 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+ // PWA service worker
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js");
+    });
+  }
+
+  // iOS double tap zoom prevention
+  let lastTouchEnd = 0;
+
+  document.addEventListener("touchend", function (event) {
+    const now = Date.now();
+
+    if (now - lastTouchEnd <= 300) {
+      event.preventDefault();
+    }
+
+    lastTouchEnd = now;
+  }, { passive: false });
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(160deg, #0a0f1e 0%, #0d1b2a 50%, #0f2133 100%);
