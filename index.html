@@ -19,7 +19,6 @@
       overflow: hidden;
     }
 
-    /* ambient glow */
     body::before {
       content: '';
       position: fixed;
@@ -45,7 +44,6 @@
       position: relative;
     }
 
-    /* ── Header ── */
     .header {
       text-align: center;
       margin-bottom: 28px;
@@ -74,7 +72,6 @@
       margin-top: 4px;
     }
 
-    /* ── PIN display ── */
     .pin-display {
       display: flex;
       justify-content: center;
@@ -101,7 +98,6 @@
       box-shadow: 0 0 10px rgba(239,68,68,0.6);
     }
 
-    /* ── Keypad ── */
     .keypad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -120,9 +116,10 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.1s ease;
+      transition: background 0.1s ease, transform 0.1s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
       position: relative;
       overflow: hidden;
     }
@@ -149,7 +146,6 @@
     }
     .key-zero { grid-column: 2; }
 
-    /* ── Status ── */
     .status {
       text-align: center;
       font-size: 14px;
@@ -161,7 +157,6 @@
     .status.err { color: #ef4444; }
     .status.loading { color: #38bdf8; }
 
-    /* ── Shake animation ── */
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       15% { transform: translateX(-8px); }
@@ -175,7 +170,6 @@
 
     .hidden { display: none !important; }
 
-    /* ── Action screen ── */
     #actionScreen { display: none; text-align: center; }
 
     .action-btn {
@@ -191,6 +185,7 @@
       letter-spacing: 0.3px;
       margin-bottom: 12px;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .action-btn:active { transform: scale(0.97); }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -221,6 +216,7 @@
       border-radius: 8px;
       transition: color 0.2s;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .logout-btn:hover { color: #94a3b8; }
   </style>
@@ -234,7 +230,6 @@
     <p>Kontrola pristupa</p>
   </div>
 
-  <!-- PIN screen -->
   <div id="pinScreen">
     <div class="pin-display" id="pinDisplay">
       <div class="pin-dot" id="d0"></div>
@@ -261,7 +256,6 @@
     <div class="status" id="pinStatus"></div>
   </div>
 
-  <!-- Action screen -->
   <div id="actionScreen">
     <div class="session-info">
       Sesija ističe za <span class="session-timer" id="timerDisplay">5:00</span>
@@ -298,13 +292,20 @@
       new Notification(title, { body, icon: "https://filipvi.github.io/HA/icon.png" });
   }
 
-  // ── PIN screen ──
-  document.getElementById("keypad").addEventListener("click", e => {
+  function handleKeyPress(e) {
+    e.preventDefault();
     const key = e.target.closest(".key");
     if (!key || checking) return;
     if (key.dataset.n !== undefined) pressDigit(key.dataset.n);
     else if (key.id === "delBtn") pressDelete();
     else if (key.id === "enterBtn") submitPin();
+  }
+
+  const keypad = document.getElementById("keypad");
+  keypad.addEventListener("touchstart", handleKeyPress, { passive: false });
+  keypad.addEventListener("click", e => {
+    if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+    handleKeyPress(e);
   });
 
   document.addEventListener("keydown", e => {
@@ -386,7 +387,6 @@
     }, 600);
   }
 
-  // ── Action screen ──
   function showActionScreen() {
     document.getElementById("pinScreen").style.display = "none";
     document.getElementById("actionScreen").style.display = "block";
