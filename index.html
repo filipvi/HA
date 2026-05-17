@@ -461,30 +461,90 @@ button {
     document.getElementById("timerDisplay").textContent = m + ":" + String(s).padStart(2, "0");
   }
 
-  async function callWebhook(type) {
+  let webhookLoading = false;
+
+    async function callWebhook(type) {
+
+    if (webhookLoading) return;
+
+    webhookLoading = true;
+
     const btns = document.querySelectorAll(".action-btn");
+    const currentBtn =
+      type === "gate"
+        ? document.getElementById("gateBtn")
+        : document.getElementById("doorBtn");
+
+    const originalHTML = currentBtn.innerHTML;
+
     btns.forEach(b => b.disabled = true);
-    setActionStatus("⏳ Slanje...", "loading");
+
+    currentBtn.classList.add("loading");
+
+    currentBtn.innerHTML = `
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <span>Slanje...</span>
+      </div>
+    `;
+
+    setActionStatus("⏳ Slanje zahtjeva...", "loading");
 
     try {
-      const res = await fetch(WEBHOOKS[type], { method: "POST" });
-      if (res.ok) {
-        if (type === "gate") {
-          setActionStatus("✅ Kapija se otvara!", "ok");
-          notify("🚪 Kapija", "Kapija se otvara!");
-        } else {
-          setActionStatus("✅ Ulazna vrata otključana!", "ok");
-          notify("🔓 Ulazna vrata", "Ulazna vrata otključana!");
-        }
-        startSessionTimer();
-        setTimeout(() => setActionStatus(""), 3000);
-      } else {
-        setActionStatus("❌ Greška (" + res.status + ")", "err");
+
+      const res = await fetch(WEBHOOKS[type], {
+        method: "POST",
+        cache: "no-store"
+      });
+
+      if (!res.ok) {
+        throw new Error(res.status);
       }
-    } catch {
-      setActionStatus("❌ Nema veze sa serverom", "err");
-    } finally {
+
+      // Vibracija
+      if (navigator.vibrate) {
+        navigator.vibrate([120, 50, 120]);
+      }
+
+      if (type === "gate") {
+
+        currentBtn.innerHTML = "✅ Kapija otvorena";
+        setActionStatus("✅ Kapija se otvara!", "ok");
+
+        notify("🚪 Kapija", "Kapija se otvara!");
+
+      } else {
+
+        currentBtn.innerHTML = "✅ Vrata otključana";
+        setActionStatus("✅ Ulazna vrata otključana!", "ok");
+
+        notify("🔓 Ulazna vrata", "Ulazna vrata otključana!");
+      }
+
+      startSessionTimer();
+
+      setTimeout(() => {
+        currentBtn.innerHTML = originalHTML;
+        currentBtn.classList.remove("loading");
+
+        btns.forEach(b => b.disabled = false);
+
+        setActionStatus("");
+
+        webhookLoading = false;
+
+      }, 2500);
+
+    } catch (e) {
+
+      currentBtn.innerHTML = originalHTML;
+      currentBtn.classList.remove("loading");
+
       btns.forEach(b => b.disabled = false);
+
+      webhookLoading = false;
+
+      setActionStatus("❌ Nema veze sa serverom", "err");
     }
   }
 
