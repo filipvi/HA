@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Vidaković kuća</title>
+  <title>VIDAKOVIĆ kuća pristup</title>
 
   <style>
     body {
@@ -22,25 +22,38 @@
       border-radius: 16px;
       padding: 30px;
       width: 340px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     }
 
     h2 {
-      margin-bottom: 20px;
-      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: none;
+      text-align: center;
+      font-size: 16px;
     }
 
     button {
       width: 100%;
       padding: 14px;
-      margin: 10px 0;
+      margin: 8px 0;
       font-size: 16px;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: 0.2s ease;
       font-weight: bold;
+    }
+
+    .login {
+      background: #f59e0b;
+      color: black;
     }
 
     .gate {
@@ -48,41 +61,24 @@
       color: white;
     }
 
-    .gate:hover {
-      transform: scale(1.03);
-    }
-
     .door {
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
     }
 
-    .door:hover {
-      transform: scale(1.03);
-    }
-
     button:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
-      transform: none !important;
     }
 
     #status {
-      margin-top: 15px;
+      margin-top: 10px;
       font-size: 14px;
       min-height: 20px;
-      opacity: 0.9;
     }
 
-    .title {
-      font-size: 20px;
-      margin-bottom: 5px;
-    }
-
-    .subtitle {
-      font-size: 12px;
-      opacity: 0.6;
-      margin-bottom: 15px;
+    .hidden {
+      display: none;
     }
   </style>
 </head>
@@ -91,16 +87,26 @@
 
 <div class="card">
 
-  <div class="title">Kontrola pristupa</div>
-  <div class="subtitle"></div>
+  <h2>🔐 Kontrola pristupa</h2>
 
-  <button class="gate" id="btnGate" onclick="otvoriKapiju()">
-    🚪 Otvori kapiju
-  </button>
+  <!-- PIN -->
+  <div id="pinBox">
+    <input type="password" id="pin" placeholder="Unesi PIN">
+    <button class="login" onclick="checkPin()">UNESI PIN</button>
+  </div>
 
-  <button class="door" id="btnDoor" onclick="otkljucajVrata()">
-    🔓 Otključaj vrata
-  </button>
+  <!-- CONTROLS -->
+  <div id="controls" class="hidden">
+
+    <button class="gate" id="btnGate" onclick="otvoriKapiju()">
+      🚪 Otvori kapiju
+    </button>
+
+    <button class="door" id="btnDoor" onclick="otkljucajVrata()">
+      🔓 Otključaj vrata
+    </button>
+
+  </div>
 
   <div id="status"></div>
 
@@ -108,8 +114,23 @@
 
 <script>
 
+const PIN = "1234";
+
 const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
-const DOOR_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/ulazna_a8f3k2m9x7q4n1p5";
+const DOOR_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/vrata_unlock";
+
+function checkPin() {
+  const input = document.getElementById("pin").value;
+  const status = document.getElementById("status");
+
+  if (input === PIN) {
+    document.getElementById("pinBox").classList.add("hidden");
+    document.getElementById("controls").classList.remove("hidden");
+    status.innerText = "✅ PIN ispravan";
+  } else {
+    status.innerText = "❌ Krivi PIN";
+  }
+}
 
 function setLoading(state) {
   document.getElementById("btnGate").disabled = state;
@@ -119,7 +140,7 @@ function setLoading(state) {
 async function sendAction(url, message, redirect = false) {
   const status = document.getElementById("status");
 
-  status.innerText = "⏳ Šaljem zahtjev...";
+  status.innerText = "⏳ Šaljem...";
   setLoading(true);
 
   try {
