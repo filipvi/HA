@@ -132,6 +132,25 @@
 const AUTH_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/gate_auth";
 const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija_a8f3k2m9x7q4n1p6";
 
+  testWebhook();
+  
+async function testWebhook() {
+  try {
+    const res = await fetch(AUTH_WEBHOOK, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ pin: "1234" })
+    });
+
+    console.log("STATUS:", res.status);
+    console.log("OK:", res.ok);
+  } catch (e) {
+    console.error("FETCH ERROR:", e);
+  }
+}
+  
 function setStatus(msg) {
   document.getElementById("status").innerText = msg;
 }
