@@ -272,29 +272,14 @@
     <div class="status" id="pinStatus"></div>
   </div>
 
-  <!-- Gate screen -->
-  <div id="gateScreen">
-    <div class="session-info">
-      Sesija ističe za <span class="session-timer" id="timerDisplay">5:00</span>
-    </div>
-    <button class="gate-btn" id="gateBtn" onclick="otvoriKapiju()">
-      🚪 &nbsp;Otvori kapiju
-    </button>
-    <div class="status" id="gateStatus" style="margin-top:16px"></div>
-    <button class="logout-btn" onclick="logout()">Odjavi se</button>
-  </div>
 </div>
 
 <script>
-  const AUTH_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija";
   const GATE_WEBHOOK = "https://vidakovic.ddnsfree.com/api/webhook/kapija";
   const PIN_LENGTH = 4;
-  const SESSION_MINUTES = 5;
 
   let pin = "";
   let checking = false;
-  let sessionTimer = null;
-  let sessionSeconds = 0;
 
   // ── Keypad input ──
   document.getElementById("keypad").addEventListener("click", e => {
@@ -312,7 +297,6 @@
 
   // Physical keyboard support
   document.addEventListener("keydown", e => {
-    if (document.getElementById("gateScreen").style.display !== "none") return;
     if (checking) return;
     if (e.key >= "0" && e.key <= "9") pressDigit(e.key);
     else if (e.key === "Backspace") pressDelete();
@@ -324,7 +308,6 @@
     pin += n;
     updateDots();
     if (pin.length === PIN_LENGTH) {
-      // slight delay so user sees last dot fill
       setTimeout(submitPin, 120);
     }
   }
@@ -332,7 +315,7 @@
   function pressDelete() {
     pin = pin.slice(0, -1);
     updateDots();
-    setStatus("pinStatus", "");
+    setStatus("");
   }
 
   function updateDots() {
@@ -343,8 +326,8 @@
     }
   }
 
-  function setStatus(id, msg, type = "") {
-    const el = document.getElementById(id);
+  function setStatus(msg, type = "") {
+    const el = document.getElementById("pinStatus");
     el.textContent = msg;
     el.className = "status" + (type ? " " + type : "");
   }
@@ -352,17 +335,17 @@
   async function submitPin() {
     if (pin.length < PIN_LENGTH || checking) return;
     checking = true;
-    setStatus("pinStatus", "⏳ Provjera...", "loading");
+    setStatus("⏳ Otvaranje...", "loading");
 
     try {
       const form = new URLSearchParams();
       form.append("pin", pin);
-      const res = await fetch(AUTH_WEBHOOK, { method: "POST", body: form });
+      const res = await fetch(GATE_WEBHOOK, { method: "POST", body: form });
       const data = await res.json().catch(() => ({}));
 
       if (data.status === "ok") {
-        setStatus("pinStatus", "✅ Pristup odobren", "ok");
-        setTimeout(showGateScreen, 400);
+        setStatus("✅ Kapija se otvara!", "ok");
+        setTimeout(resetPin, 3000);
       } else {
         wrongPin();
       }
@@ -374,83 +357,27 @@
   }
 
   function wrongPin(msg = "❌ Pogrešan PIN") {
-    setStatus("pinStatus", msg, "err");
-    // paint dots red
+    setStatus(msg, "err");
     for (let i = 0; i < PIN_LENGTH; i++) {
       const dot = document.getElementById("d" + i);
       dot.classList.add("error");
       dot.classList.remove("filled");
     }
-    // shake
     const display = document.getElementById("pinDisplay");
     display.classList.remove("shake");
-    void display.offsetWidth; // reflow
+    void display.offsetWidth;
     display.classList.add("shake");
 
     setTimeout(() => {
-      pin = "";
-      updateDots();
+      resetPin();
       display.classList.remove("shake");
     }, 600);
   }
 
-  // ── Gate screen ──
-  function showGateScreen() {
-    document.getElementById("pinScreen").style.display = "none";
-    const gs = document.getElementById("gateScreen");
-    gs.style.display = "block";
-    startSessionTimer();
-  }
-
-  function startSessionTimer() {
-    sessionSeconds = SESSION_MINUTES * 60;
-    updateTimerDisplay();
-    clearInterval(sessionTimer);
-    sessionTimer = setInterval(() => {
-      sessionSeconds--;
-      updateTimerDisplay();
-      if (sessionSeconds <= 0) logout();
-    }, 1000);
-  }
-
-  function updateTimerDisplay() {
-    const m = Math.floor(sessionSeconds / 60);
-    const s = sessionSeconds % 60;
-    document.getElementById("timerDisplay").textContent =
-      m + ":" + String(s).padStart(2, "0");
-  }
-
-  function logout() {
-    clearInterval(sessionTimer);
+  function resetPin() {
     pin = "";
     updateDots();
-    setStatus("pinStatus", "");
-    setStatus("gateStatus", "");
-    document.getElementById("gateScreen").style.display = "none";
-    document.getElementById("pinScreen").style.display = "block";
-  }
-
-  async function otvoriKapiju() {
-    const btn = document.getElementById("gateBtn");
-    btn.disabled = true;
-    setStatus("gateStatus", "⏳ Otvaranje...", "loading");
-
-    try {
-      const res = await fetch(GATE_WEBHOOK, { method: "POST" });
-      if (res.ok) {
-        setStatus("gateStatus", "✅ Kapija se otvara!", "ok");
-        btn.classList.add("pulsing");
-        setTimeout(() => btn.classList.remove("pulsing"), 1000);
-        // reset session timer on successful action
-        startSessionTimer();
-      } else {
-        setStatus("gateStatus", "❌ Greška (" + res.status + ")", "err");
-      }
-    } catch {
-      setStatus("gateStatus", "❌ Nema veze sa serverom", "err");
-    } finally {
-      btn.disabled = false;
-    }
+    setStatus("");
   }
 </script>
 </body>
