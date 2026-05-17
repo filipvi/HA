@@ -2,10 +2,33 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Vidaković kuća</title>
+  <title>Kapija</title>
 </head>
 <body>
-  <h1>Dobrodošli - Vidaković kuća 🎉</h1>
-  <button onclick="alert('Pozdrav!')">Klik</button>
+  <h1>Kontrola kapije</h1>
+
+  <button onclick="otvoriKapiju()">Otvori kapiju</button>
+
+  <p id="status"></p>
+
+  <script>
+    async function otvoriKapiju() {
+      document.getElementById("status").innerText = "Šaljem zahtjev...";
+
+      try {
+        const res = await fetch("https://vidakovic.ddnsfree.com//api/webhook/kapija_a8f3k2m9x7q4n1p6", {
+          method: "POST"
+        });
+
+        if (res.ok) {
+          document.getElementById("status").innerText = "Kapija otvorena ✅";
+        } else {
+          document.getElementById("status").innerText = "Greška ❌";
+        }
+      } catch (e) {
+        document.getElementById("status").innerText = "Neuspješno ❌";
+      }
+    }
+  </script>
 </body>
 </html>
