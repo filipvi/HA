@@ -142,12 +142,15 @@ async function checkPin() {
   setStatus("⏳ Provjera PIN-a...");
 
   try {
-      const form = new URLSearchParams();
-      form.append("pin", pin);
-    
-      fetch(url, { method: "POST", body: form });
+    const form = new URLSearchParams();
+    form.append("pin", pin);
 
-    const data = await res.json();
+    const res = await fetch(AUTH_WEBHOOK, {
+      method: "POST",
+      body: form
+    });
+
+    const data = await res.json().catch(() => ({}));
 
     if (data.status === "ok") {
       document.getElementById("pinBox").classList.add("hidden");
