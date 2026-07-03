@@ -429,20 +429,16 @@
     setActionStatus("⏳ Slanje...", "loading");
 
     try {
-      const res = await fetch(WEBHOOKS[type], { method: "POST" });
-      if (res.ok) {
-        if (type === "gate") {
-          setActionStatus("✅ Kapija se otvara!", "ok");
-          notify("🚪 Kapija", "Kapija se otvara!");
-        } else {
-          setActionStatus("✅ Ulazna vrata otključana!", "ok");
-          notify("🔓 Ulazna vrata", "Ulazna vrata otključana!");
-        }
-        startSessionTimer();
-        setTimeout(() => setActionStatus(""), 3000);
+      await fetch(WEBHOOKS[type], { method: "POST", mode: "no-cors" });
+      if (type === "gate") {
+        setActionStatus("✅ Kapija se otvara!", "ok");
+        notify("🚪 Kapija", "Kapija se otvara!");
       } else {
-        setActionStatus("❌ Greška (" + res.status + ")", "err");
+        setActionStatus("✅ Ulazna vrata otključana!", "ok");
+        notify("🔓 Ulazna vrata", "Ulazna vrata otključana!");
       }
+      startSessionTimer();
+      setTimeout(() => setActionStatus(""), 3000);
     } catch {
       setActionStatus("❌ Nema veze sa serverom", "err");
     } finally {
